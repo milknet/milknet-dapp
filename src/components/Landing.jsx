@@ -23,7 +23,7 @@ export default function Landing() {
           <h1 className="text-4xl mb-8 text-yellow-400 font-bold drop-shadow-lg">
             MilkNet Dairy Supply Chain Marketplace
           </h1>
-          <p className="text-xl mb-8 drop-shadow-md">
+          <p className="text-xl mb-8 drop-shadow-md font-bold">
             Connect directly with farmers for fresh dairy products
           </p>
           
