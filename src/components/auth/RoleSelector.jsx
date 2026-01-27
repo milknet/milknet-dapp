@@ -13,7 +13,7 @@ export default function RoleSelector() {
   const { login, checkUserRoles } = useAuth();
   const { account } = useWeb3();
   const navigate = useNavigate();
-  
+
   // Check available roles when component mounts
   useEffect(() => {
     const checkRoles = async () => {
@@ -21,12 +21,12 @@ export default function RoleSelector() {
         navigate('/login');
         return;
       }
-      
+
       try {
         setCheckingRoles(true);
         const userRoles = await checkUserRoles();
         setAvailableRoles(userRoles);
-        
+
         // Auto-select role if user only has one role
         if (userRoles.isFarmer && !userRoles.isBuyer) {
           setRole(ROLES.FARMER);
@@ -40,7 +40,7 @@ export default function RoleSelector() {
         setCheckingRoles(false);
       }
     };
-    
+
     checkRoles();
   }, [account, checkUserRoles, navigate]);
 
@@ -49,18 +49,20 @@ export default function RoleSelector() {
       toast.error('Please select a role to continue');
       return;
     }
-    
+
     try {
       setLoading(true);
       await login(role);
-      
+
       // Redirect based on role
       if (role === ROLES.FARMER) {
         navigate('/farmer');
       } else if (role === ROLES.BUYER) {
         navigate('/buyer-dashboard');
+      } else if (role === ROLES.CORPORATE) {
+        navigate('/corporate-dashboard');
       }
-      
+
       toast.success('Successfully logged in!');
     } catch (error) {
       console.error('Login error:', error);
@@ -83,7 +85,7 @@ export default function RoleSelector() {
             Select which role you want to use
           </p>
         </div>
-        
+
         <div className="mt-8">
           <div>
             <label className="block text-sm font-medium text-gray-700">Connected Wallet</label>
@@ -91,7 +93,7 @@ export default function RoleSelector() {
               <span className="truncate">{account}</span>
             </div>
           </div>
-          
+
           <div className="mt-6">
             <label className="block text-sm font-medium text-gray-700 mb-2">Select Role</label>
             {checkingRoles ? (
@@ -104,41 +106,52 @@ export default function RoleSelector() {
               </div>
             ) : (
               <div className="mt-1 grid grid-cols-2 gap-3">
-                <div 
-                  className={`border rounded-md px-3 py-2 text-center ${
-                    !availableRoles.isFarmer 
-                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
-                      : role === ROLES.FARMER 
-                        ? 'bg-green-50 border-green-500 text-green-700 cursor-pointer' 
-                        : 'border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer'
-                  }`}
+                <div
+                  className={`border rounded-md px-3 py-2 text-center ${!availableRoles.isFarmer
+                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    : role === ROLES.FARMER
+                      ? 'bg-green-50 border-green-500 text-green-700 cursor-pointer'
+                      : 'border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer'
+                    }`}
                   onClick={() => availableRoles.isFarmer && setRole(ROLES.FARMER)}
                 >
                   Farmer
                   {!availableRoles.isFarmer && <div className="text-xs mt-1">(Not Registered)</div>}
                 </div>
-                <div 
-                  className={`border rounded-md px-3 py-2 text-center ${
-                    !availableRoles.isBuyer 
-                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
-                      : role === ROLES.BUYER 
-                        ? 'bg-green-50 border-green-500 text-green-700 cursor-pointer' 
-                        : 'border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer'
-                  }`}
+                <div
+                  className={`border rounded-md px-3 py-2 text-center ${!availableRoles.isBuyer
+                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    : role === ROLES.BUYER
+                      ? 'bg-green-50 border-green-500 text-green-700 cursor-pointer'
+                      : 'border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer'
+                    }`}
                   onClick={() => availableRoles.isBuyer && setRole(ROLES.BUYER)}
                 >
                   Buyer
                   {!availableRoles.isBuyer && <div className="text-xs mt-1">(Not Registered)</div>}
                 </div>
+
+                <div
+                  className={`border rounded-md px-3 py-2 text-center col-span-2 ${!availableRoles.isCorporate
+                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                      : role === ROLES.CORPORATE
+                        ? 'bg-green-50 border-green-500 text-green-700 cursor-pointer'
+                        : 'border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer'
+                    }`}
+                  onClick={() => availableRoles.isCorporate && setRole(ROLES.CORPORATE)}
+                >
+                  Corporate
+                  {!availableRoles.isCorporate && <div className="text-xs mt-1">(Not Registered)</div>}
+                </div>
               </div>
             )}
-            {!availableRoles.isFarmer && !availableRoles.isBuyer && !checkingRoles && (
+            {!availableRoles.isFarmer && !availableRoles.isBuyer && !availableRoles.isCorporate && !checkingRoles && (
               <div className="mt-2 text-sm text-red-600">
                 You haven't registered for any roles yet. <a href="/register" className="font-semibold text-green-600 hover:underline">Register now</a>.
               </div>
             )}
           </div>
-          
+
           <div className="mt-6">
             <button
               type="button"
