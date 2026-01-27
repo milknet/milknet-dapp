@@ -1,5 +1,5 @@
 import { ethers } from 'ethers';
-import { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import MilkNetABI from '../utils/MilkNetABI.json';
 import { toast } from 'react-toastify';
 import { ethToKes, CURRENT_ETH_TO_KES_RATE } from '../utils/currencyUtils';
@@ -21,6 +21,13 @@ export function Web3Provider({ children }) {
   const [account, setAccount] = useState('');
   const [contract, setContract] = useState(null);
   const [networkName, setNetworkName] = useState('');
+  
+  // Use a ref to track the current account without triggering effect re-runs
+  const accountRef = useRef(account);
+  
+  useEffect(() => {
+    accountRef.current = account;
+  }, [account]);
   
   const disconnectWallet = () => {
     setAccount('');
@@ -202,8 +209,8 @@ export function Web3Provider({ children }) {
         toast.error('Network not supported - please switch to Sepolia or Lisk Testnet');
       } else {
         toast.info(`Network changed to ${chainIdHex === '0xaa36a7' ? 'Sepolia' : 'LISK Testnet'}`);
-        // Reload only if we had an account before
-        if (account) {
+        // Use ref to check current account
+        if (accountRef.current) {
           const provider = new ethers.BrowserProvider(window.ethereum);
           initWeb3(provider).catch(error => {
             console.error('Web3 reinitialization error on chain change:', error);
@@ -216,8 +223,8 @@ export function Web3Provider({ children }) {
       console.log('Accounts changed: ', accounts);
       const newAccount = accounts[0] || '';
       
-      // Only update if the account actually changed
-      if (newAccount.toLowerCase() !== account?.toLowerCase()) {
+      // Use ref to compare against current account
+      if (newAccount.toLowerCase() !== accountRef.current?.toLowerCase()) {
         console.log('Setting new account:', newAccount);
         setAccount(newAccount);
         if (newAccount) {
@@ -235,29 +242,45 @@ export function Web3Provider({ children }) {
     };
 
     if (window.ethereum) {
-      // Listen for accounts changing
-      window.ethereum.on('accountsChanged', handleAccountsChanged);
-      
-      // Listen for chain changing
-      window.ethereum.on('chainChanged', handleChainChanged);
-      
-      // Initial account check
-      if (!account) {
-        window.ethereum.request({ method: 'eth_accounts' })
-          .then(accounts => {
-            if (accounts && accounts.length > 0) {
-              handleAccountsChanged(accounts);
-            }
-          })
-          .catch(err => console.error('Error checking initial accounts:', err));
+      try {
+        // Check if verify removeListener is available (sanity check)
+        if (typeof window.ethereum.on !== 'function') {
+           console.warn('window.ethereum.on is not a function');
+           return;
+        }
+
+        // Listen for accounts changing
+        window.ethereum.on('accountsChanged', handleAccountsChanged);
+        
+        // Listen for chain changing
+        window.ethereum.on('chainChanged', handleChainChanged);
+        
+        // Initial account check if not connected
+        if (!accountRef.current) {
+          window.ethereum.request({ method: 'eth_accounts' })
+            .then(accounts => {
+              if (accounts && accounts.length > 0) {
+                handleAccountsChanged(accounts);
+              }
+            })
+            .catch(err => console.error('Error checking initial accounts:', err));
+        }
+      } catch (e) {
+        console.error('Error setting up Web3 listeners:', e);
       }
       
       return () => {
-        window.ethereum.removeListener('chainChanged', handleChainChanged);
-        window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
+        try {
+          if (window.ethereum && window.ethereum.removeListener) {
+            window.ethereum.removeListener('chainChanged', handleChainChanged);
+            window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
+          }
+        } catch (e) {
+          console.error('Error cleaning up Web3 listeners:', e);
+        }
       };
     }
-  }, [account, initWeb3]);
+  }, [initWeb3]);
 
   return (
     <Web3Context.Provider value={{
