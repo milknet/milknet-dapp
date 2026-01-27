@@ -17,6 +17,7 @@ import Login from './components/auth/Login';
 import Register from './components/auth/Register';
 import RoleSelector from './components/auth/RoleSelector';
 import BuyerDashboard from './components/buyer/Dashboard';
+import CorporateDashboard from './components/corporate/Dashboard';
 import FileDispute from './components/disputes/FileDispute';
 
 // Protected route component
@@ -62,7 +63,7 @@ function App() {
     <Web3Provider>
       <BrowserRouter>
         <AuthProvider>
-          <ToastContainer 
+          <ToastContainer
             position="top-right"
             autoClose={5000}
             hideProgressBar={false}
@@ -86,7 +87,7 @@ function App() {
               <Route path="/register-farmer" element={<FarmerRegistration />} />
               <Route path="/farmer" element={
                 <ProtectedRoute requiredRole={ROLES.FARMER}>
-                  <FarmerDashboard/>
+                  <FarmerDashboard />
                 </ProtectedRoute>
               } />
               <Route path="/marketplace" element={
@@ -99,6 +100,11 @@ function App() {
               <Route path="/buyer-dashboard" element={
                 <ProtectedRoute requiredRole={ROLES.BUYER}>
                   <BuyerDashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/corporate-dashboard" element={
+                <ProtectedRoute requiredRole={ROLES.CORPORATE}>
+                  <CorporateDashboard />
                 </ProtectedRoute>
               } />
               <Route path="/dashboard" element={
