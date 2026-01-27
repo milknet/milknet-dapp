@@ -10,13 +10,14 @@ export default function Register() {
   const [selectedRoles, setSelectedRoles] = useState([]);
   const [farmerName, setFarmerName] = useState('');
   const [buyerName, setBuyerName] = useState('');
+  const [corporateName, setCorporateName] = useState('');
   const [location, setLocation] = useState('');
   const [loading, setLoading] = useState(false);
-  
-  const { registerAsFarmer, registerAsBuyer, isAuthenticated } = useAuth();
+
+  const { registerAsFarmer, registerAsBuyer, registerAsCorporate, isAuthenticated } = useAuth();
   const { account, connectWallet } = useWeb3();
   const navigate = useNavigate();
-  
+
   // Redirect if user is already authenticated
   useEffect(() => {
     if (isAuthenticated) {
@@ -47,22 +48,22 @@ export default function Register() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!account) {
       toast.error('Please connect your wallet first');
       return;
     }
-    
+
     if (selectedRoles.length === 0) {
       toast.error('Please select at least one role');
       return;
     }
-    
+
     try {
       setLoading(true);
-      
+
       const registrationPromises = [];
-      
+
       if (selectedRoles.includes(ROLES.FARMER)) {
         if (!farmerName || !location) {
           toast.error('Please provide farm name and location for Farmer registration');
@@ -71,7 +72,7 @@ export default function Register() {
         }
         registrationPromises.push(registerAsFarmer(farmerName, location));
       }
-      
+
       if (selectedRoles.includes(ROLES.BUYER)) {
         if (!buyerName) {
           toast.error('Please provide your name for Buyer registration');
@@ -80,14 +81,23 @@ export default function Register() {
         }
         registrationPromises.push(registerAsBuyer(buyerName));
       }
-      
+
+      if (selectedRoles.includes(ROLES.CORPORATE)) {
+        if (!corporateName) {
+          toast.error('Please provide corporate name for Corporate registration');
+          setLoading(false);
+          return;
+        }
+        registrationPromises.push(registerAsCorporate(corporateName));
+      }
+
       await Promise.all(registrationPromises);
-      
+
       toast.success('Registration successful!');
-      
+
       // Redirect to role selection
       navigate('/select-role');
-      
+
     } catch (error) {
       console.error('Registration error:', error);
       toast.error(formatBlockchainError(error) || 'Registration failed');
@@ -98,7 +108,7 @@ export default function Register() {
 
   return (
     <div className="min-h-screen bg-gray-50 py-16 px-4">
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
@@ -109,12 +119,12 @@ export default function Register() {
             <h2 className="text-3xl font-bold">Register for MilkNet</h2>
             <p className="mt-2 text-green-100">Join our blockchain-powered milk supply chain</p>
           </div>
-          
+
           <div className="p-8">
             {!account ? (
               <div className="text-center">
                 <div className="mb-6">
-                  <svg 
+                  <svg
                     className="w-16 h-16 mx-auto text-gray-400"
                     fill="none"
                     stroke="currentColor"
@@ -146,7 +156,7 @@ export default function Register() {
                 <div className="mt-6 text-center">
                   <p className="text-sm text-gray-600">
                     Already registered?{' '}
-                    <button 
+                    <button
                       onClick={() => navigate('/login')}
                       className="text-green-600 hover:text-green-800 font-medium"
                     >
@@ -169,14 +179,13 @@ export default function Register() {
                     Choose which roles you would like to register for
                   </p>
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-4 mb-6">
-                  <div 
-                    className={`border rounded-lg p-4 text-center cursor-pointer transition-colors ${
-                      selectedRoles.includes(ROLES.FARMER)
-                        ? 'bg-green-50 border-green-500 text-green-700' 
-                        : 'border-gray-200 text-gray-700 hover:bg-gray-50'
-                    }`}
+                  <div
+                    className={`border rounded-lg p-4 text-center cursor-pointer transition-colors ${selectedRoles.includes(ROLES.FARMER)
+                      ? 'bg-green-50 border-green-500 text-green-700'
+                      : 'border-gray-200 text-gray-700 hover:bg-gray-50'
+                      }`}
                     onClick={() => toggleRole(ROLES.FARMER)}
                   >
                     <svg className="w-10 h-10 mx-auto mb-2 text-current" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -184,13 +193,12 @@ export default function Register() {
                     </svg>
                     <div className="font-medium">Farmer</div>
                   </div>
-                  
-                  <div 
-                    className={`border rounded-lg p-4 text-center cursor-pointer transition-colors ${
-                      selectedRoles.includes(ROLES.BUYER)
-                        ? 'bg-green-50 border-green-500 text-green-700' 
-                        : 'border-gray-200 text-gray-700 hover:bg-gray-50'
-                    }`}
+
+                  <div
+                    className={`border rounded-lg p-4 text-center cursor-pointer transition-colors ${selectedRoles.includes(ROLES.BUYER)
+                      ? 'bg-green-50 border-green-500 text-green-700'
+                      : 'border-gray-200 text-gray-700 hover:bg-gray-50'
+                      }`}
                     onClick={() => toggleRole(ROLES.BUYER)}
                   >
                     <svg className="w-10 h-10 mx-auto mb-2 text-current" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -198,8 +206,21 @@ export default function Register() {
                     </svg>
                     <div className="font-medium">Buyer</div>
                   </div>
+
+                  <div
+                    className={`border rounded-lg p-4 text-center cursor-pointer transition-colors col-span-2 ${selectedRoles.includes(ROLES.CORPORATE)
+                      ? 'bg-green-50 border-green-500 text-green-700'
+                      : 'border-gray-200 text-gray-700 hover:bg-gray-50'
+                      }`}
+                    onClick={() => toggleRole(ROLES.CORPORATE)}
+                  >
+                    <svg className="w-10 h-10 mx-auto mb-2 text-current" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                    <div className="font-medium">Corporate</div>
+                  </div>
                 </div>
-                
+
                 {/* Dynamic form fields based on selected roles */}
                 {selectedRoles.includes(ROLES.FARMER) && (
                   <div className="mb-6 p-4 bg-green-50 rounded-lg border border-green-100">
@@ -217,7 +238,7 @@ export default function Register() {
                           required={selectedRoles.includes(ROLES.FARMER)}
                         />
                       </div>
-                      
+
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           Location *
@@ -233,7 +254,7 @@ export default function Register() {
                     </div>
                   </div>
                 )}
-                
+
                 {selectedRoles.includes(ROLES.BUYER) && (
                   <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
                     <h4 className="font-medium text-blue-800 mb-3">Buyer Details</h4>
@@ -251,7 +272,25 @@ export default function Register() {
                     </div>
                   </div>
                 )}
-                
+
+                {selectedRoles.includes(ROLES.CORPORATE) && (
+                  <div className="mb-6 p-4 bg-purple-50 rounded-lg border border-purple-100">
+                    <h4 className="font-medium text-purple-800 mb-3">Corporate Details</h4>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Corporate Name *
+                      </label>
+                      <input
+                        type="text"
+                        value={corporateName}
+                        onChange={(e) => setCorporateName(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                        required={selectedRoles.includes(ROLES.CORPORATE)}
+                      />
+                    </div>
+                  </div>
+                )}
+
                 <button
                   type="submit"
                   disabled={loading || selectedRoles.length === 0}
@@ -270,7 +309,7 @@ export default function Register() {
                 <div className="mt-6 text-center">
                   <p className="text-sm text-gray-600">
                     Already registered?{' '}
-                    <button 
+                    <button
                       type="button"
                       onClick={() => navigate('/login')}
                       className="text-green-600 hover:text-green-800 font-medium"
