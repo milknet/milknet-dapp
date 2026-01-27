@@ -7,6 +7,10 @@ import { fetchBatches } from '../../utils/contractCalls';
 import { motion } from 'framer-motion';
 import BatchList from '../batches/BatchList';
 import ExpiredBatches from '../batches/ExpiredBatches';
+import FarmProfile from './FarmProfile';
+import ProductionLog from './ProductionLog';
+import HerdManagement from './HerdManagement';
+import Inventory from './Inventory';
 
 // Add this near the top of the file, after the imports
 const BigInt = window.BigInt || global.BigInt;
@@ -30,17 +34,17 @@ export default function FarmerDashboard() {
           const allBatches = await fetchBatches(contract);
           // Filter batches for current farmer and count only active ones
           const farmerBatches = allBatches.filter(
-            batch => 
-              batch.farmerAddress.toLowerCase() === account.toLowerCase() && 
+            batch =>
+              batch.farmerAddress.toLowerCase() === account.toLowerCase() &&
               (BigInt(batch.flags) & BigInt(0x1)) === BigInt(0x1) && // Check if batch is active
               (BigInt(batch.flags) & BigInt(0x2)) === BigInt(0) &&    // Check if batch is not deleted
               Number(batch.expiryDate) > Math.floor(Date.now() / 1000) // Check if not expired
           );
-          
+
           console.log('All batches:', allBatches);
           console.log('Farmer batches:', farmerBatches);
           console.log('Current account:', account);
-          
+
           setTotalBatches(farmerBatches.length);
           setFarmerData({ ...data, batches: farmerBatches });
         } catch (error) {
@@ -76,7 +80,7 @@ export default function FarmerDashboard() {
             <p className="font-medium">Unable to load farmer data. Please check your connection.</p>
           </div>
         </div>
-        <button 
+        <button
           onClick={() => window.location.reload()}
           className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors"
         >
@@ -96,8 +100,8 @@ export default function FarmerDashboard() {
               <h1 className="text-3xl font-bold text-white mb-2">Welcome back, {farmerData.name || 'Farmer'}</h1>
               <p className="text-green-100">Manage your dairy business with real-time insights and secure transactions</p>
             </div>
-            <button 
-              onClick={() => setShowBatchForm(true)} 
+            <button
+              onClick={() => setShowBatchForm(true)}
               className="mt-4 md:mt-0 bg-white hover:bg-gray-100 text-green-800 font-semibold py-2 px-6 rounded-lg transition-all flex items-center shadow-md"
             >
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -110,16 +114,15 @@ export default function FarmerDashboard() {
       </div>
 
       {/* Navigation Tabs */}
-      <div className="flex gap-4 mb-8 border-b">
-        {['overview', 'orders', 'batches'].map((tab) => (
+      <div className="flex gap-4 mb-8 border-b overflow-x-auto">
+        {['overview', 'orders', 'batches', 'profile', 'herd', 'production', 'inventory'].map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`px-4 py-2 font-medium capitalize transition-colors ${
-              activeTab === tab 
-                ? 'text-green-600 border-b-2 border-green-600' 
-                : 'text-gray-600 hover:text-green-600'
-            }`}
+            className={`px-4 py-2 font-medium capitalize transition-colors whitespace-nowrap ${activeTab === tab
+              ? 'text-green-600 border-b-2 border-green-600'
+              : 'text-gray-600 hover:text-green-600'
+              }`}
           >
             {tab}
           </button>
@@ -129,48 +132,48 @@ export default function FarmerDashboard() {
       {/* Main Content */}
       <div className="space-y-8">
         {activeTab === 'overview' && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
           >
-            <StatsCard 
-              title="Active Batches" 
-              value={totalBatches} 
-              description="Your current milk batches available in the marketplace" 
+            <StatsCard
+              title="Active Batches"
+              value={totalBatches}
+              description="Your current milk batches available in the marketplace"
               icon="batch"
               color="green"
             />
-            
-            <StatsCard 
-              title="Total Orders" 
-              value={orders.length} 
-              description="Orders made by buyers for your milk batches" 
+
+            <StatsCard
+              title="Total Orders"
+              value={orders.length}
+              description="Orders made by buyers for your milk batches"
               icon="orders"
               color="blue"
             />
-            
-            <StatsCard 
-              title="Reputation" 
-              value={farmerData.rating ? `${farmerData.rating}/5` : 'New'} 
-              description="Your rating based on buyer feedback" 
+
+            <StatsCard
+              title="Reputation"
+              value={farmerData.rating ? `${farmerData.rating}/5` : 'New'}
+              description="Your rating based on buyer feedback"
               icon="star"
               color="amber"
               showStars={true}
             />
-            
-            <StatsCard 
-              title="Total Earnings" 
-              value="View" 
-              description="Check your current earnings from sales" 
+
+            <StatsCard
+              title="Total Earnings"
+              value="View"
+              description="Check your current earnings from sales"
               icon="money"
               color="purple"
             />
           </motion.div>
         )}
-        
+
         {activeTab === 'orders' && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="bg-white shadow-md rounded-xl p-6"
@@ -198,9 +201,9 @@ export default function FarmerDashboard() {
             )}
           </motion.div>
         )}
-        
+
         {activeTab === 'batches' && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="space-y-6"
@@ -210,15 +213,14 @@ export default function FarmerDashboard() {
               <div className="flex gap-2">
                 <button
                   onClick={() => setShowExpiredBatches(!showExpiredBatches)}
-                  className={`px-3 py-1 rounded-lg text-sm font-medium ${
-                    showExpiredBatches 
-                      ? 'bg-red-100 text-red-800' 
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
+                  className={`px-3 py-1 rounded-lg text-sm font-medium ${showExpiredBatches
+                    ? 'bg-red-100 text-red-800'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
                 >
                   {showExpiredBatches ? 'Hide Expired' : 'Show Expired'}
                 </button>
-                <button 
+                <button
                   onClick={() => setShowBatchForm(true)}
                   className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg text-sm font-medium transition-colors flex items-center"
                 >
@@ -229,11 +231,11 @@ export default function FarmerDashboard() {
                 </button>
               </div>
             </div>
-            
+
             {farmerData?.batches?.length > 0 ? (
-              <BatchList 
-                batches={farmerData.batches} 
-                userRole="farmer" 
+              <BatchList
+                batches={farmerData.batches}
+                userRole="farmer"
               />
             ) : (
               <div className="bg-white shadow rounded-xl p-6 text-center">
@@ -246,7 +248,7 @@ export default function FarmerDashboard() {
                 <p className="text-gray-500 max-w-md mx-auto mb-4">
                   You don't have any active milk batches right now. Add a new batch to get started.
                 </p>
-                <button 
+                <button
                   onClick={() => setShowBatchForm(true)}
                   className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors inline-flex items-center"
                 >
@@ -257,11 +259,27 @@ export default function FarmerDashboard() {
                 </button>
               </div>
             )}
-            
+
             {showExpiredBatches && <ExpiredBatches />}
           </motion.div>
         )}
-        
+
+        {activeTab === 'profile' && (
+          <FarmProfile walletAddress={account} />
+        )}
+
+        {activeTab === 'herd' && (
+          <HerdManagement walletAddress={account} />
+        )}
+
+        {activeTab === 'production' && (
+          <ProductionLog walletAddress={account} />
+        )}
+
+        {activeTab === 'inventory' && (
+          <Inventory walletAddress={account} />
+        )}
+
         {/* Farmer Guide Section */}
         {activeTab === 'overview' && (
           <div className="bg-white shadow-md rounded-xl p-6 mt-8">
@@ -276,7 +294,7 @@ export default function FarmerDashboard() {
                 <h3 className="text-lg font-semibold text-gray-800 mb-2">1. Register Milk Batches</h3>
                 <p className="text-gray-600">Register your milk batches with details about quantity, price, and expiry date.</p>
               </div>
-              
+
               <div className="p-4 border border-gray-200 rounded-lg">
                 <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-3">
                   <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -286,7 +304,7 @@ export default function FarmerDashboard() {
                 <h3 className="text-lg font-semibold text-gray-800 mb-2">2. Manage Orders</h3>
                 <p className="text-gray-600">Review and manage incoming orders from buyers interested in your milk batches.</p>
               </div>
-              
+
               <div className="p-4 border border-gray-200 rounded-lg">
                 <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center mb-3">
                   <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -300,7 +318,7 @@ export default function FarmerDashboard() {
           </div>
         )}
       </div>
-      
+
       {/* Create Batch Modal */}
       {showBatchForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -308,7 +326,7 @@ export default function FarmerDashboard() {
             <div className="p-6">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-bold text-gray-800">Register New Milk Batch</h2>
-                <button 
+                <button
                   onClick={() => setShowBatchForm(false)}
                   className="text-gray-500 hover:text-gray-700"
                 >
@@ -329,14 +347,13 @@ export default function FarmerDashboard() {
 // Helper component for stats cards
 function StatsCard({ title, value, description, icon, color, showStars }) {
   return (
-    <motion.div 
+    <motion.div
       whileHover={{ y: -5 }}
-      className={`bg-white rounded-xl shadow-md p-6 border-l-4 ${
-        color === 'green' ? 'border-green-600' :
+      className={`bg-white rounded-xl shadow-md p-6 border-l-4 ${color === 'green' ? 'border-green-600' :
         color === 'blue' ? 'border-blue-600' :
-        color === 'amber' ? 'border-yellow-600' :
-        'border-purple-600'
-      }`}
+          color === 'amber' ? 'border-yellow-600' :
+            'border-purple-600'
+        }`}
     >
       <div className="flex justify-between items-center">
         <div>
@@ -353,12 +370,11 @@ function StatsCard({ title, value, description, icon, color, showStars }) {
             </div>
           )}
         </div>
-        <div className={`p-3 ${
-          color === 'green' ? 'bg-green-100 text-green-600' :
+        <div className={`p-3 ${color === 'green' ? 'bg-green-100 text-green-600' :
           color === 'blue' ? 'bg-blue-100 text-blue-600' :
-          color === 'amber' ? 'bg-yellow-100 text-yellow-600' :
-          'bg-purple-100 text-purple-600'
-        } rounded-full`}>
+            color === 'amber' ? 'bg-yellow-100 text-yellow-600' :
+              'bg-purple-100 text-purple-600'
+          } rounded-full`}>
           <IconComponent name={icon} color={color} />
         </div>
       </div>
@@ -368,13 +384,13 @@ function StatsCard({ title, value, description, icon, color, showStars }) {
 
 // Helper for icons
 function IconComponent({ name, color }) {
-  const iconColor = 
+  const iconColor =
     color === 'green' ? 'text-green-600' :
-    color === 'blue' ? 'text-blue-600' :
-    color === 'amber' ? 'text-yellow-600' :
-    'text-purple-600';
-  
-  switch(name) {
+      color === 'blue' ? 'text-blue-600' :
+        color === 'amber' ? 'text-yellow-600' :
+          'text-purple-600';
+
+  switch (name) {
     case 'batch':
       return (
         <svg className={`w-8 h-8 ${iconColor}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
