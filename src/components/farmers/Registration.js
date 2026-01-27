@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useWeb3 } from '../../contexts/Web3Context';
 import { useNavigate } from 'react-router-dom';
 import { ethers } from 'ethers';
+import { toast } from 'react-toastify';
 
 // Ensure BigInt is available
 const BigInt = window.BigInt || global.BigInt;
@@ -27,6 +28,7 @@ export default function FarmerRegistration() {
           const farmerData = await contract.farmers(account);
           if ((BigInt(farmerData.flags) & BigInt(1)) !== BigInt(0)) {
             setRegistrationStatus('already-registered');
+            toast.warning('⚠️ You are already registered as a farmer');
           } else {
             setRegistrationStatus('unregistered');
           }
@@ -42,22 +44,33 @@ export default function FarmerRegistration() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!contract) {
-      setError('Contract not initialized - check network connection');
+      const errorMsg = 'Contract not initialized - check network connection';
+      setError(errorMsg);
+      toast.error(errorMsg);
       return;
     }
     
     setIsLoading(true);
     try {
       if (formData.name.length < 2 || formData.name.length > 64) {
-        setError('Name must be between 2 and 64 characters');
+        const errorMsg = 'Name must be between 2 and 64 characters';
+        setError(errorMsg);
+        toast.error(errorMsg);
+        setIsLoading(false);
         return;
       }
       if (formData.location.length === 0 || formData.location.length > 32) {
-        setError('LOcation must be between 1 and 32 characters');
+        const errorMsg = 'LOcation must be between 1 and 32 characters';
+        setError(errorMsg);
+        toast.error(errorMsg);
+        setIsLoading(false);
         return;
       }
       if (!formData.certification) {
-        setError('Please upload a certification document');
+        const errorMsg = 'Please upload a certification document';
+        setError(errorMsg);
+        toast.error(errorMsg);
+        setIsLoading(false);
         return;
       }
       const tx = await contract.registerFarmer(
@@ -67,9 +80,22 @@ export default function FarmerRegistration() {
         { gasLimit: 500000 }
       );
       await tx.wait();
+      toast.success('✅ Registration successful! Redirecting...');
       navigate('/farmer');
     } catch (error) {
+      let errorMsg =  error.message;
+
+      if (error.message.includes('already registered') || error.message.includes('ALREADY_REGISTERED')) {
+        errorMsg = 'You are already registered as a farmer';
+        toast.error('❌ ' + errorMsg);
+      } else if (error.message.includes('user rejected')) {
+        toast.error('❌ Transaction was rejected');
+      } else {
+        toast.error('❌ ' + errorMsg);
+      }
+
       setError(error.message);
+      console.error('Registration error:', error);
     } finally {
       setIsLoading(false);
     }
